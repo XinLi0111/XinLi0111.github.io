@@ -1,2 +1,2 @@
-# code
-deposit my personal code
+# Academic
+Display academic related information
