@@ -1,10 +1,11 @@
-title = "Notre-Dame de Paris"
+title = "Li, Xin's Blog"
 baseURL = "https://xinli0111.gitee.io/academic"
-languageCode = "en-us"
+languageCode = "zh"
 theme = "ananke"
 
+
 MetaDataFormat = "yaml"
-DefaultContentLanguage = "en"
+DefaultContentLanguage = "zh"
 SectionPagesMenu = "main"
 Paginate = 3 # this is set low for demonstrating with dummy content. Set to a higher number
 googleAnalytics = ""
@@ -17,9 +18,9 @@ enableRobotsTXT = true
 
 [params]
   favicon = ""
-  description = "The last theme you'll ever need. Maybe."
+  description = "Note Knowledge"
   facebook = ""
-  twitter = "https://twitter.com/GoHugoIO"
+  twitter = ""
   instagram = ""
   youtube = ""
   github = ""
