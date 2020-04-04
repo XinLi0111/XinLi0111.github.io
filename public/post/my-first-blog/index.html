@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noodp"/>
+  <meta name="author" content="Li, Xin">
+  <meta name="description" content="Learning Python">
+  <meta name="keywords" content="Python">
+  
+  <link rel="prev" href="https://example.com/2014/creating-a-new-theme/" />
+  
+  <link rel="canonical" href="https://example.com/post/my-first-blog/" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
+  <title>
+       
+       
+           My first blog | LeaveIt
+       
+  </title>
+  <meta name="title" content="My first blog | LeaveIt">
+    
+  
+  <link rel="stylesheet" href="/font/iconfont.css">
+  <link rel="stylesheet" href="/css/main.min.css">
+
+
+  
+  
+ 
+
+<script type="application/ld+json">
+ "@context" : "http://schema.org",
+    "@type" : "BlogPosting",
+    "mainEntityOfPage": {
+         "@type": "WebPage",
+         "@id": "https:\/\/example.com"
+    },
+    "articleSection" : "post",
+    "name" : "My first blog",
+    "headline" : "My first blog",
+    "description" : "idba_ud 是一个可以针对不同测序深度的短reads的基于交互式De Bruijin作图的从头拼接软件。他从小的k-mer开始到大的的k-mer步步前进，设定阈值，短的和低深度的contigs被删掉，这样来完成低深度和高深度的拼接。 拼接之前需要对原始下机数据进行清洗质控。 拼接后需要使用诱饵序列调取最终的拼接结果，所以这里将拼接过程和调取脚本合并于同一个脚本中。\n fastp质控  通常来说，二代测序公司返回的测序数据为clean data，即经过去除低质量测序数据后的数据。目前有公司已经不再返回clean data，而是直接返回下机数据raw data。这里将这一步也加入处理流程中。 生物信息中，一旦涉及到 fastq 数据的处理，通常都要消耗大量内存、CPU 和时间。从 fastq 文件中随机抽取数据。使用的工具是 seqtk，详细安装教程：http:\/\/www.genek.tv\/article\/28\n使用fastp软件。\n它可以仅仅扫描 FASTQ 文件一次，就完成比FASTQC \x2b cutadapt \x2b Trimmomatic 这三个软件加起来还多很多的功能，而且速度上比仅仅使用 Trimmomatic 一个软件还要快 3 倍左右，因为它使用 C\x2b\x2b开发，处处使用了高效算法，而且完美支持多线程！\n安装\n安装 fastp 十分简单，如果你使用的是 Linux 系统，可以直接使用网站上提供的预编译好的版本，下载地址是http:\/\/opengene.org\/fastp\/fastp，可以使用 wget等命令进行下载，下载了之后记得使用 chmod a\x2bx .\/fastp 增加该文件的可执行权限，然后就可以使用了。\n也可以从源代码进行编译，需要使用 git 工具或者直接在网页上下载 release 的 源代码，以 git 下载最新的代码为例：\ngit clone https:\/\/github.com\/OpenGene\/fastp.git cd fastp make sudo make install\n使用",
+    "inLanguage" : "en-us",
+    "author" : "Li, Xin",
+    "creator" : "Li, Xin",
+    "publisher": "Li, Xin",
+    "accountablePerson" : "Li, Xin",
+    "copyrightHolder" : "Li, Xin",
+    "copyrightYear" : "2020",
+    "datePublished": "2020-03-26 05:27:53 \x2b0000 UTC",
+    "dateModified" : "2020-03-26 05:27:53 \x2b0000 UTC",
+    "url" : "https:\/\/example.com\/post\/my-first-blog\/",
+    "wordCount" : "60",
+    "keywords" : [  "LeaveIt"]
+}
+</script>
+
+</head>
+
+  
+
+
+  <body class="">
+    <div class="wrapper">
+        <nav class="navbar">
+    <div class="container">
+        <div class="navbar-header header-logo">
+        	<a href="javascript:void(0);" class="theme-switch"><i class="iconfont icon-xihuan"></i></a>&nbsp;<a href="https://example.com">LeaveIt</a>
+        </div>
+        <div class="menu navbar-right">
+                
+                
+                <a class="menu-item" href="/posts/" title="">Blog</a>
+                
+                <a class="menu-item" href="/categories/" title="">Categories</a>
+                
+                <a class="menu-item" href="/tags/" title="">Tags</a>
+                
+                <a class="menu-item" href="/about/" title="">About</a>
+                
+                <a class="menu-item" href="/about/" title="About Hugo">About Hugo</a>
+                
+        </div>
+    </div>
+</nav>
+<nav class="navbar-mobile" id="nav-mobile" style="display: none">
+     <div class="container">
+        <div class="navbar-header">
+            <div>  <a href="javascript:void(0);" class="theme-switch"><i class="iconfont icon-xihuan"></i></a>&nbsp;<a href="https://example.com">LeaveIt</a></div>
+            <div class="menu-toggle">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+     
+          <div class="menu" id="mobile-menu">
+                
+                
+                <a class="menu-item" href="/posts/" title="">Blog</a>
+                
+                <a class="menu-item" href="/categories/" title="">Categories</a>
+                
+                <a class="menu-item" href="/tags/" title="">Tags</a>
+                
+                <a class="menu-item" href="/about/" title="">About</a>
+                
+                <a class="menu-item" href="/about/" title="About Hugo">About Hugo</a>
+                
+        </div>
+    </div>
+</nav>
+    	 <main class="main">
+          <div class="container">
+      		
+<article class="post-warp" itemscope itemtype="http://schema.org/Article">
+    <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">My first blog</h1>
+        <div class="post-meta">
+                Written by <a itemprop="name" href="https://example.com" rel="author">Li, Xin</a> with ♥ 
+                <span class="post-time">
+                on <time datetime=2020-03-26 itemprop="datePublished">March 26, 2020</time>
+                </span>
+                in
+                
+        </div>
+    </header>
+    <div class="post-content">
+        
+
+        
+
+        
+        
+     
+          
+          
+          
+
+          
+          
+          
+
+          <p>idba_ud 是一个可以针对不同测序深度的短reads的基于交互式De Bruijin作图的从头拼接软件。他从小的k-mer开始到大的的k-mer步步前进，设定阈值，短的和低深度的contigs被删掉，这样来完成低深度和高深度的拼接。
+拼接之前需要对原始下机数据进行清洗质控。
+拼接后需要使用诱饵序列调取最终的拼接结果，所以这里将拼接过程和调取脚本合并于同一个脚本中。</p>
+<ol>
+<li>fastp质控</li>
+</ol>
+<p>通常来说，二代测序公司返回的测序数据为clean data，即经过去除低质量测序数据后的数据。目前有公司已经不再返回clean data，而是直接返回下机数据raw data。这里将这一步也加入处理流程中。
+生物信息中，一旦涉及到 fastq 数据的处理，通常都要消耗大量内存、CPU 和时间。从 fastq 文件中随机抽取数据。使用的工具是 seqtk，详细安装教程：http://www.genek.tv/article/28</p>
+<p>使用fastp软件。</p>
+<p>它可以仅仅扫描 FASTQ 文件一次，就完成比FASTQC + cutadapt + Trimmomatic 这三个软件加起来还多很多的功能，而且速度上比仅仅使用 Trimmomatic 一个软件还要快 3 倍左右，因为它使用 C++开发，处处使用了高效算法，而且完美支持多线程！</p>
+<p>安装</p>
+<p>安装 fastp 十分简单，如果你使用的是 Linux 系统，可以直接使用网站上提供的预编译好的版本，下载地址是http://opengene.org/fastp/fastp，可以使用 wget等命令进行下载，下载了之后记得使用 chmod a+x ./fastp 增加该文件的可执行权限，然后就可以使用了。</p>
+<p>也可以从源代码进行编译，需要使用 git 工具或者直接在网页上下载 release 的 源代码，以 git 下载最新的代码为例：</p>
+<p>git clone <a href="https://github.com/OpenGene/fastp.git">https://github.com/OpenGene/fastp.git</a>
+cd fastp
+make
+sudo make install</p>
+<p>使用</p>
+
+    </div>
+
+    <div class="post-copyright">
+             
+            <p class="copyright-item">
+                <span>Author:</span>
+                <span>Li, Xin </span>
+                </p>
+            
+           
+             
+            <p class="copyright-item">
+                    <span>Link:</span>
+                    <a href=https://example.com/post/my-first-blog/>https://example.com/post/my-first-blog/</span>
+            </p>
+            
+             
+            <p class="copyright-item lincese">
+                本文采用<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/" target="_blank">知识共享署名-非商业性使用 4.0 国际许可协议</a>进行许可
+            </p>
+            
+    </div>
+
+  
+    <div class="post-tags">
+        
+        <section>
+                <a href="javascript:window.history.back();">back</a></span> · 
+                <span><a href="https://example.com">home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav">
+        
+        <a href="https://example.com/2014/creating-a-new-theme/" class="prev" rel="prev" title="Creating a New Theme"><i class="iconfont icon-left"></i>&nbsp;Creating a New Theme</a>
+         
+        
+    </div>
+
+    <div class="post-comment">
+          
+                 
+          
+    </div>
+</article>
+          </div>
+		   </main>
+      <footer class="footer">
+    <div class="copyright">
+        &copy;
+        
+        <span itemprop="copyrightYear">2020 - 2020</span>
+        
+        <span class="with-love">
+    	 <i class="iconfont icon-love"></i> 
+         </span>
+         
+            <span class="author" itemprop="copyrightHolder"><a href="https://example.com">Li, Xin</a> | </span> 
+         
+
+         
+		  <span>Powered by <a href="https://gohugo.io/" target="_blank" rel="external nofollow">Hugo</a> & <a href="https://github.com/liuzc/leaveit" target="_blank" rel="external nofollow">LeaveIt</a></span> 
+    </div>
+</footer>
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+    <script src="/js/vendor_no_gallery.min.js" async=""></script>
+    
+  
+
+
+
+     </div>
+  </body>
+</html>
