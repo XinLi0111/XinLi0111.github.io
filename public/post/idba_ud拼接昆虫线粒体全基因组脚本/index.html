@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>Li, Xin&#39;s Blog  | Idba_ud拼接昆虫线粒体全基因组脚本</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.68.3" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/academic/dist/css/app.1cb140d8ba31d5b2f1114537dd04802a.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+    
+
+    
+    
+    <meta property="og:title" content="Idba_ud拼接昆虫线粒体全基因组脚本" />
+<meta property="og:description" content="idba_ud 是一个可以针对不同测序深度的短reads的基于交互式De Bruijin作图的从头拼接软件。他从小的k-mer开始到大的的k-mer步步前进，设定阈值，短的和低深度的contigs被删掉，这样来完成低深度和高深度的拼接。 拼接之前需要对原始下机数据进行清洗质控。 拼接后需要使用诱饵序列调取最终的拼接结果，所以这里将拼接过程和调取脚本合并于同一个脚本中。
+ 1. fastp质控  通常来说，二代测序公司返回的测序数据为clean data，即经过去除低质量测序数据后的数据。目前有公司已经不再返回clean data，而是直接返回下机数据raw data。这里将这一步也加入处理流程中。 生物信息中，一旦涉及到 fastq 数据的处理，通常都要消耗大量内存、CPU 和时间。从 fastq 文件中随机抽取数据。使用的工具是 seqtk，详细安装教程：http://www.genek.tv/article/28
+  使用fastp软件。   它可以仅仅扫描 FASTQ 文件一次，就完成比FASTQC &#43; cutadapt &#43; Trimmomatic 这三个软件加起来还多很多的功能，而且速度上比仅仅使用 Trimmomatic 一个软件还要快 3 倍左右，因为它使用 C&#43;&#43;开发，处处使用了高效算法，而且完美支持多线程！
+ 安装 安装 fastp 十分简单，如果你使用的是 Linux 系统，可以直接使用网站上提供的预编译好的版本，下载地址是http://opengene.org/fastp/fastp，可以使用 wget等命令进行下载，下载了之后记得使用 chmod a&#43;x ./fastp 增加该文件的可执行权限，然后就可以使用了。也可以从源代码进行编译，需要使用 git 工具或者直接在网页上下载 release 的 源代码，以 git 下载最新的代码为例：git clone https://github.com/OpenGene/fastp.git cd fastp make sudo make install 使用 fastp -i in." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://xinli0111.gitee.io/academic/post/idba_ud%E6%8B%BC%E6%8E%A5%E6%98%86%E8%99%AB%E7%BA%BF%E7%B2%92%E4%BD%93%E5%85%A8%E5%9F%BA%E5%9B%A0%E7%BB%84%E8%84%9A%E6%9C%AC/" />
+<meta property="article:published_time" content="2020-04-04T18:38:14+08:00" />
+<meta property="article:modified_time" content="2020-04-04T18:38:14+08:00" />
+<meta itemprop="name" content="Idba_ud拼接昆虫线粒体全基因组脚本">
+<meta itemprop="description" content="idba_ud 是一个可以针对不同测序深度的短reads的基于交互式De Bruijin作图的从头拼接软件。他从小的k-mer开始到大的的k-mer步步前进，设定阈值，短的和低深度的contigs被删掉，这样来完成低深度和高深度的拼接。 拼接之前需要对原始下机数据进行清洗质控。 拼接后需要使用诱饵序列调取最终的拼接结果，所以这里将拼接过程和调取脚本合并于同一个脚本中。
+ 1. fastp质控  通常来说，二代测序公司返回的测序数据为clean data，即经过去除低质量测序数据后的数据。目前有公司已经不再返回clean data，而是直接返回下机数据raw data。这里将这一步也加入处理流程中。 生物信息中，一旦涉及到 fastq 数据的处理，通常都要消耗大量内存、CPU 和时间。从 fastq 文件中随机抽取数据。使用的工具是 seqtk，详细安装教程：http://www.genek.tv/article/28
+  使用fastp软件。   它可以仅仅扫描 FASTQ 文件一次，就完成比FASTQC &#43; cutadapt &#43; Trimmomatic 这三个软件加起来还多很多的功能，而且速度上比仅仅使用 Trimmomatic 一个软件还要快 3 倍左右，因为它使用 C&#43;&#43;开发，处处使用了高效算法，而且完美支持多线程！
+ 安装 安装 fastp 十分简单，如果你使用的是 Linux 系统，可以直接使用网站上提供的预编译好的版本，下载地址是http://opengene.org/fastp/fastp，可以使用 wget等命令进行下载，下载了之后记得使用 chmod a&#43;x ./fastp 增加该文件的可执行权限，然后就可以使用了。也可以从源代码进行编译，需要使用 git 工具或者直接在网页上下载 release 的 源代码，以 git 下载最新的代码为例：git clone https://github.com/OpenGene/fastp.git cd fastp make sudo make install 使用 fastp -i in.">
+<meta itemprop="datePublished" content="2020-04-04T18:38:14&#43;08:00" />
+<meta itemprop="dateModified" content="2020-04-04T18:38:14&#43;08:00" />
+<meta itemprop="wordCount" content="1450">
+
+
+
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Idba_ud拼接昆虫线粒体全基因组脚本"/>
+<meta name="twitter:description" content="idba_ud 是一个可以针对不同测序深度的短reads的基于交互式De Bruijin作图的从头拼接软件。他从小的k-mer开始到大的的k-mer步步前进，设定阈值，短的和低深度的contigs被删掉，这样来完成低深度和高深度的拼接。 拼接之前需要对原始下机数据进行清洗质控。 拼接后需要使用诱饵序列调取最终的拼接结果，所以这里将拼接过程和调取脚本合并于同一个脚本中。
+ 1. fastp质控  通常来说，二代测序公司返回的测序数据为clean data，即经过去除低质量测序数据后的数据。目前有公司已经不再返回clean data，而是直接返回下机数据raw data。这里将这一步也加入处理流程中。 生物信息中，一旦涉及到 fastq 数据的处理，通常都要消耗大量内存、CPU 和时间。从 fastq 文件中随机抽取数据。使用的工具是 seqtk，详细安装教程：http://www.genek.tv/article/28
+  使用fastp软件。   它可以仅仅扫描 FASTQ 文件一次，就完成比FASTQC &#43; cutadapt &#43; Trimmomatic 这三个软件加起来还多很多的功能，而且速度上比仅仅使用 Trimmomatic 一个软件还要快 3 倍左右，因为它使用 C&#43;&#43;开发，处处使用了高效算法，而且完美支持多线程！
+ 安装 安装 fastp 十分简单，如果你使用的是 Linux 系统，可以直接使用网站上提供的预编译好的版本，下载地址是http://opengene.org/fastp/fastp，可以使用 wget等命令进行下载，下载了之后记得使用 chmod a&#43;x ./fastp 增加该文件的可执行权限，然后就可以使用了。也可以从源代码进行编译，需要使用 git 工具或者直接在网页上下载 release 的 源代码，以 git 下载最新的代码为例：git clone https://github.com/OpenGene/fastp.git cd fastp make sudo make install 使用 fastp -i in."/>
+
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="https://xinli0111.gitee.io/academic" class="f3 fw2 hover-white no-underline white-90 dib">
+      Li, Xin&#39;s Blog
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+        <ul class="pl0 mr3">
+          
+          <li class="list f5 f4-ns fw4 dib pr3">
+            <a class="hover-white no-underline white-90" href="/academic/about/" title="About page">
+              About
+            </a>
+          </li>
+          
+          <li class="list f5 f4-ns fw4 dib pr3">
+            <a class="hover-white no-underline white-90" href="/academic/post/" title="Articles page">
+              Articles
+            </a>
+          </li>
+          
+        </ul>
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked">
+          
+        ARTICLES
+      </aside>
+      
+
+
+
+
+  <div id="sharing" class="mt3">
+
+    
+    <a href="https://www.facebook.com/sharer.php?u=https://xinli0111.gitee.io/academic/post/idba_ud%E6%8B%BC%E6%8E%A5%E6%98%86%E8%99%AB%E7%BA%BF%E7%B2%92%E4%BD%93%E5%85%A8%E5%9F%BA%E5%9B%A0%E7%BB%84%E8%84%9A%E6%9C%AC/" class="facebook no-underline" aria-label="share on Facebook">
+      <svg height="32px"  style="enable-background:new 0 0 67 67;" version="1.1" viewBox="0 0 67 67" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M28.765,50.32h6.744V33.998h4.499l0.596-5.624h-5.095  l0.007-2.816c0-1.466,0.14-2.253,2.244-2.253h2.812V17.68h-4.5c-5.405,0-7.307,2.729-7.307,7.317v3.377h-3.369v5.625h3.369V50.32z   M33,64C16.432,64,3,50.569,3,34S16.432,4,33,4s30,13.431,30,30S49.568,64,33,64z" style="fill-rule:evenodd;clip-rule:evenodd;"/></svg>
+
+    </a>
+
+    
+    
+    <a href="https://twitter.com/share?url=https://xinli0111.gitee.io/academic/post/idba_ud%E6%8B%BC%E6%8E%A5%E6%98%86%E8%99%AB%E7%BA%BF%E7%B2%92%E4%BD%93%E5%85%A8%E5%9F%BA%E5%9B%A0%E7%BB%84%E8%84%9A%E6%9C%AC/&amp;text=Idba_ud%e6%8b%bc%e6%8e%a5%e6%98%86%e8%99%ab%e7%ba%bf%e7%b2%92%e4%bd%93%e5%85%a8%e5%9f%ba%e5%9b%a0%e7%bb%84%e8%84%9a%e6%9c%ac" class="twitter no-underline" aria-label="share on Twitter">
+      <svg height="32px"  style="enable-background:new 0 0 67 67;" version="1.1" viewBox="0 0 67 67" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M37.167,22.283c-2.619,0.953-4.274,3.411-4.086,6.101  l0.063,1.038l-1.048-0.127c-3.813-0.487-7.145-2.139-9.974-4.915l-1.383-1.377l-0.356,1.017c-0.754,2.267-0.272,4.661,1.299,6.271  c0.838,0.89,0.649,1.017-0.796,0.487c-0.503-0.169-0.943-0.296-0.985-0.233c-0.146,0.149,0.356,2.076,0.754,2.839  c0.545,1.06,1.655,2.097,2.871,2.712l1.027,0.487l-1.215,0.021c-1.173,0-1.215,0.021-1.089,0.467  c0.419,1.377,2.074,2.839,3.918,3.475l1.299,0.444l-1.131,0.678c-1.676,0.976-3.646,1.526-5.616,1.568  C19.775,43.256,19,43.341,19,43.405c0,0.211,2.557,1.397,4.044,1.864c4.463,1.377,9.765,0.783,13.746-1.568  c2.829-1.673,5.657-5,6.978-8.221c0.713-1.716,1.425-4.851,1.425-6.354c0-0.975,0.063-1.102,1.236-2.267  c0.692-0.678,1.341-1.419,1.467-1.631c0.21-0.403,0.188-0.403-0.88-0.043c-1.781,0.636-2.033,0.551-1.152-0.402  c0.649-0.678,1.425-1.907,1.425-2.267c0-0.063-0.314,0.042-0.671,0.233c-0.377,0.212-1.215,0.53-1.844,0.72l-1.131,0.361l-1.027-0.7  c-0.566-0.381-1.361-0.805-1.781-0.932C39.766,21.902,38.131,21.944,37.167,22.283z M33,64C16.432,64,3,50.569,3,34S16.432,4,33,4  s30,13.431,30,30S49.568,64,33,64z" style="fill-rule:evenodd;clip-rule:evenodd;fill:;"/></svg>
+
+    </a>
+
+    
+    <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https://xinli0111.gitee.io/academic/post/idba_ud%E6%8B%BC%E6%8E%A5%E6%98%86%E8%99%AB%E7%BA%BF%E7%B2%92%E4%BD%93%E5%85%A8%E5%9F%BA%E5%9B%A0%E7%BB%84%E8%84%9A%E6%9C%AC/&amp;title=Idba_ud%e6%8b%bc%e6%8e%a5%e6%98%86%e8%99%ab%e7%ba%bf%e7%b2%92%e4%bd%93%e5%85%a8%e5%9f%ba%e5%9b%a0%e7%bb%84%e8%84%9a%e6%9c%ac" class="linkedin no-underline" aria-label="share on LinkedIn">
+      <svg  height="32px"  style="enable-background:new 0 0 65 65;" version="1.1" viewBox="0 0 65 65" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <path d="M50.837,48.137V36.425c0-6.275-3.35-9.195-7.816-9.195  c-3.604,0-5.219,1.983-6.119,3.374V27.71h-6.79c0.09,1.917,0,20.427,0,20.427h6.79V36.729c0-0.609,0.044-1.219,0.224-1.655  c0.49-1.22,1.607-2.483,3.482-2.483c2.458,0,3.44,1.873,3.44,4.618v10.929H50.837z M22.959,24.922c2.367,0,3.842-1.57,3.842-3.531  c-0.044-2.003-1.475-3.528-3.797-3.528s-3.841,1.524-3.841,3.528c0,1.961,1.474,3.531,3.753,3.531H22.959z M34,64  C17.432,64,4,50.568,4,34C4,17.431,17.432,4,34,4s30,13.431,30,30C64,50.568,50.568,64,34,64z M26.354,48.137V27.71h-6.789v20.427  H26.354z" style="fill-rule:evenodd;clip-rule:evenodd;fill:;"/>
+</svg>
+
+    </a>
+  </div>
+
+      <h1 class="f1 athelas mt3 mb1">Idba_ud拼接昆虫线粒体全基因组脚本</h1>
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2020-04-04T18:38:14&#43;08:00">April 4, 2020</time>
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l"><blockquote>
+<p> <a href="http://i.cs.hku.hk/~alse/hkubrg/projects/idba_ud/">idba_ud</a> 是一个可以针对不同测序深度的短reads的基于交互式De Bruijin作图的从头拼接软件。他从小的k-mer开始到大的的k-mer步步前进，设定阈值，短的和低深度的contigs被删掉，这样来完成低深度和高深度的拼接。
+拼接之前需要对原始下机数据进行清洗质控。
+拼接后需要使用诱饵序列调取最终的拼接结果，所以这里将拼接过程和调取脚本合并于同一个脚本中。</p>
+</blockquote>
+<p><!-- raw HTML omitted --></p>
+<h1 id="1-fastp质控">1. fastp质控</h1>
+<blockquote>
+<p>通常来说，二代测序公司返回的测序数据为clean data，即经过去除低质量测序数据后的数据。目前有公司已经不再返回clean data，而是直接返回下机数据raw data。这里将这一步也加入处理流程中。
+生物信息中，一旦涉及到 fastq 数据的处理，通常都要消耗大量内存、CPU 和时间。从 fastq 文件中随机抽取数据。使用的工具是 <a href="https://github.com/lh3/seqtk">seqtk</a>，详细安装教程：<a href="http://www.genek.tv/article/28">http://www.genek.tv/article/28</a></p>
+</blockquote>
+<ul>
+<li>使用fastp软件。</li>
+</ul>
+<blockquote>
+<p>它可以仅仅扫描 FASTQ 文件一次，就完成比FASTQC + cutadapt + Trimmomatic 这三个软件加起来还多很多的功能，而且速度上比仅仅使用 Trimmomatic 一个软件还要快 3 倍左右，因为它使用 C++开发，处处使用了高效算法，而且完美支持多线程！</p>
+</blockquote>
+<h2 id="安装">安装</h2>
+<p><!-- raw HTML omitted -->安装 fastp 十分简单，如果你使用的是 Linux 系统，可以直接使用网站上提供的预编译好的版本，下载地址是http://opengene.org/fastp/fastp，可以使用 wget等命令进行下载，下载了之后记得使用 chmod a+x ./fastp 增加该文件的可执行权限，然后就可以使用了。<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->也可以从源代码进行编译，需要使用 git 工具或者直接在网页上下载 release 的 源代码，以 git 下载最新的代码为例：<!-- raw HTML omitted --></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">git clone https://github.com/OpenGene/fastp.git
+cd fastp
+make
+sudo make install
+</code></pre></div><h2 id="使用">使用</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">fastp -i in.R1.fq -o out.R1.fq -I in.R2.fq -O out.R2.fq -q <span style="color:#ae81ff">20</span> -w <span style="color:#ae81ff">30</span>
+<span style="color:#75715e"># 可以看到，-i 和-o 还是用来指定 read1 的输入了输出，而大写的-I 和-O(不是零)则是用于指定read2的输入和输出，其他都保持不变。而且fastp软件最初的研发就是为了更好地处理 PE 数据，所以对于 PE 数据开发了更多的算法，比如基于 overlap 分析进行碱基校正等功能，就是只有 PE 数据独享的。fastp 对于输入和输出都支持 gzip 压缩，使用方法也很简单，只要文件名的末尾带有.gz，就会被认为是 gzip 压缩文件，会启用 gzip 对输入输出进行压缩和解压处理，例如以上 PE 的例子，如果是压缩的，就可以是以下命令：</span>
+<span style="color:#75715e"># fastp -i in.R1.fq.gz -I in.R2.fq.gz -o out.R1.fq.gz -O out.R2.fq.gz -q 20 -w 30</span>
+</code></pre></div><hr>
+<h1 id="2-idba_ud组装">2. idba_ud组装</h1>
+<ul>
+<li>线粒体使用idba_ud, celera，idba，ray和_de novo_ TRANS。如果是单种建库，还可以用mitoZ，一键获取线粒体组装注释上传结果。</li>
+</ul>
+<h2 id="安装-1">安装</h2>
+<h5 id="第一步下载安装idba">第一步：下载安装idba</h5>
+<p><!-- raw HTML omitted -->这里提供在GitHub中的下载地址：<a href="https://github.com/loneknightpy/idba/releases">点这里下载idba</a><!-- raw HTML omitted -->
+<!-- raw HTML omitted -->Ubuntu系统中使用如下命令安装：<!-- raw HTML omitted --></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#75715e"># 进入idba安装文件所在文件夹内操作</span>
+./configure
+make
+    
+<span style="color:#75715e"># 如果需要清除configure文件</span>
+make clean
+</code></pre></div><p><!-- raw HTML omitted -->   idba软件初始设计是支持kmer值为128的，也就是说目前二代测序结果读长都超过其设计阈值，因此我们需要做一些更改，以适应150和250的测序数据拼接。共需要改两处：<!-- raw HTML omitted -->
+<!-- raw HTML omitted --></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-perl" data-lang="perl"><span style="color:#ae81ff">1</span><span style="color:#f92672">.</span> idba安装文件夹下的src<span style="color:#e6db74">/sequence/s</span>hort_sequence<span style="color:#f92672">.</span>h文件中<span style="color:#960050;background-color:#1e0010">，</span>改为kMaxShortSequence <span style="color:#f92672">=</span> <span style="color:#ae81ff">512</span><span style="color:#960050;background-color:#1e0010">；</span>
+<span style="color:#ae81ff">2</span><span style="color:#f92672">.</span> basic文件夹中的kmer<span style="color:#f92672">.</span>h文件中<span style="color:#960050;background-color:#1e0010">，</span>更改kNumUnit64 <span style="color:#f92672">=</span> <span style="color:#ae81ff">16</span><span style="color:#f92672">.</span>
+</code></pre></div><blockquote>
+<p>作者原文：Note that IDBA assemblers are designed for short reads (around 100bp). If you want to assemble paired-end reads with longer read length, please modify the constant <strong>kMaxShortSequence</strong> in src/sequence/short_sequence.h to support longer read length.</p>
+</blockquote>
+<blockquote>
+</blockquote>
+<h2 id="使用-1">使用</h2>
+<p>在执行完质控过程后，在数据所在文件夹中运行idba_ud-assemble-0.3.5.py<!-- raw HTML omitted --></p>
+<blockquote>
+<p>通常需要一天左右时间。该种方法极耗计算资源，要求200g以上内存，500g以上硬盘空间。</p>
+</blockquote>
+<p><!-- raw HTML omitted --></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#75715e"># 如果你对上述配置和编程脚本无爱，请在安装完成blast之后，手动执行以下命令。在组装之后，使用BioEdit执行blast调取。</span>
+
+<span style="color:#75715e">#首先执行质控，得到解压后的fq文件。</span>
+mv *1.fq R1.fq
+mv *2.fq R2.fq
+
+fq2fa --merge R1.fq R2.fq merged.fa --filter 
+
+<span style="color:#75715e"># 本参数适用于250测序，如果是150测序，将--mink 40 --maxk 140用为参数</span>
+idba_ud -r merged.fa --mink <span style="color:#ae81ff">80</span> --maxk <span style="color:#ae81ff">240</span> --step <span style="color:#ae81ff">20</span> -o OutFolderName --num_threads <span style="color:#ae81ff">30</span> --min_contig <span style="color:#ae81ff">500</span> --similar 0.98
+<span style="color:#75715e">#在此步之后，将组装结果和你自己的诱饵序列baits，手动进行blast（BioEdit）</span>
+
+<span style="color:#75715e">#如果idbassemble.py脚本出错，seqspicker.py正常，可以正常使用本套以下命令</span>
+makeblastdb -in COI.fa -dbtype nucl -parse_seqids -out COIndex
+
+blastn -query scaffold.fa -out seq.blast -db COIndex -outfmt <span style="color:#ae81ff">6</span> -evalue 1e-5 -max_target_seqs <span style="color:#ae81ff">1</span> -num_threads <span style="color:#ae81ff">30</span>
+
+python seqspicker.py scaffold.fa seq.blast
+</code></pre></div><hr>
+<h1 id="3-sequencepicker调取">3. SequencePicker调取</h1>
+<p><!-- raw HTML omitted -->这一步主要是从已经组装好的scaffold中，找到你需要的那一个。<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->一般线粒体全基因组处理方法为使用blast，使用COI, 16S之类的片段，从scaffold中匹配目标序列，选取blast结果最佳的那一个。<!-- raw HTML omitted --></p>
+<h2 id="安装-2">安装</h2>
+<h3 id="第一步下载安装blastn">第一步：下载安装blastn+</h3>
+<p><!-- raw HTML omitted -->NCBI网站上下载安装blastn+：<a href="">点击这里下载blastn+</a><!-- raw HTML omitted -->
+<!-- raw HTML omitted -->下载完成后，解压，添加到环境变量中就可以使用了。<!-- raw HTML omitted --></p>
+<h3 id="第二步调取target序列脚本">第二步：调取target序列脚本</h3>
+<p><!-- raw HTML omitted -->使用Python脚本调取target序列 <a href="https://github.com/XinLi0111/Python/blob/master/seqspicker.py">点这下载此脚本</a><!-- raw HTML omitted --></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e">#!/usr/bin/env python</span>
+<span style="color:#75715e"># -*- ecoding: utf-8 -*-</span>
+
+<span style="color:#f92672">import</span> pandas <span style="color:#f92672">as</span> pd
+<span style="color:#f92672">import</span> sys
+    
+    
+<span style="color:#e6db74">&#39;&#39;&#39;
+</span><span style="color:#e6db74">Author:  Eric Lee
+</span><span style="color:#e6db74">date:    2018-04-24
+</span><span style="color:#e6db74">fileName:seqspicker.py
+</span><span style="color:#e6db74">version: 0.2
+</span><span style="color:#e6db74">    
+</span><span style="color:#e6db74">this script only used for simplly pick up sequence blast results 
+</span><span style="color:#e6db74">   from IDBA_UD scaffold fasta file.
+</span><span style="color:#e6db74">    
+</span><span style="color:#e6db74">usage: python seqspicker.py scaffold.fa seqblastout
+</span><span style="color:#e6db74">&#39;&#39;&#39;</span>
+
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">parse_blastn</span>(blastn6):
+   <span style="color:#e6db74">&#39;&#39;&#39;parse blastn tabular results&#39;&#39;&#39;</span>
+   <span style="color:#66d9ef">with</span> open(blastn6) <span style="color:#66d9ef">as</span> fi:
+       blast_out_list <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>read_csv(fi, sep<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#39;</span>,header <span style="color:#f92672">=</span> None)
+       scaffold_name <span style="color:#f92672">=</span> list(blast_out_list[<span style="color:#ae81ff">0</span>])
+       index_name <span style="color:#f92672">=</span> list(blast_out_list[<span style="color:#ae81ff">1</span>])
+       index_dict <span style="color:#f92672">=</span> dict(zip(scaffold_name,index_name))
+       
+   <span style="color:#66d9ef">return</span> index_dict
+
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">read_fasta</span>(scaffold_fa):
+   <span style="color:#e6db74">&#39;&#39;&#39;read fasta file as dict&#39;&#39;&#39;</span>
+   fasta <span style="color:#f92672">=</span> {}
+   <span style="color:#66d9ef">with</span> open(scaffold_fa) <span style="color:#66d9ef">as</span> file_one:
+       <span style="color:#66d9ef">for</span> line <span style="color:#f92672">in</span> file_one:
+           line <span style="color:#f92672">=</span> line<span style="color:#f92672">.</span>strip()
+           <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> line:
+               <span style="color:#66d9ef">continue</span>
+           <span style="color:#66d9ef">if</span> line<span style="color:#f92672">.</span>startswith(<span style="color:#e6db74">&#34;&gt;&#34;</span>):
+               active_sequence_name <span style="color:#f92672">=</span> line[<span style="color:#ae81ff">1</span>:]
+               <span style="color:#66d9ef">if</span> active_sequence_name <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> fasta:
+                  fasta[active_sequence_name] <span style="color:#f92672">=</span> []
+               <span style="color:#66d9ef">continue</span>
+           sequence <span style="color:#f92672">=</span> line
+           fasta[active_sequence_name]<span style="color:#f92672">.</span>append(sequence)
+
+   <span style="color:#66d9ef">return</span> fasta
+
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_hits</span>(scaffold, seq_blast):
+   <span style="color:#e6db74">&#39;&#39;&#39;get seq targets&#39;&#39;&#39;</span>
+   index <span style="color:#f92672">=</span> parse_blastn(seq_blast)
+   fasta <span style="color:#f92672">=</span> read_fasta(scaffold)
+   hit <span style="color:#f92672">=</span> {}
+   <span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#39;hits.fas&#39;</span>,<span style="color:#e6db74">&#39;w&#39;</span>) <span style="color:#66d9ef">as</span> hits:
+       <span style="color:#66d9ef">for</span> key, value <span style="color:#f92672">in</span> index<span style="color:#f92672">.</span>items():
+           newkey <span style="color:#f92672">=</span> key<span style="color:#f92672">+</span><span style="color:#e6db74">&#39;_&#39;</span><span style="color:#f92672">+</span>value
+           hit[newkey] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span><span style="color:#f92672">.</span>join(fasta[key])
+
+       <span style="color:#66d9ef">for</span> newkey,hit_value <span style="color:#f92672">in</span> hit<span style="color:#f92672">.</span>items():
+           hits<span style="color:#f92672">.</span>write(<span style="color:#e6db74">&#39;&gt;{}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">{}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span><span style="color:#f92672">.</span>format(newkey,hit_value))
+
+
+
+<span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+
+   get_hits(sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">1</span>],sys<span style="color:#f92672">.</span>argv[<span style="color:#ae81ff">2</span>])
+   <span style="color:#66d9ef">print</span>(<span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">Completed!</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>)
+</code></pre></div><h3 id="或者使用python整合拼接流程">或者：使用Python整合拼接流程</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#75715e">#!/usr/bin/env python</span>
+<span style="color:#75715e"># -*-coding: utf-8-*-</span>
+
+<span style="color:#e6db74">&#39;&#39;&#39;
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">This script used for idba_ud NGS sequences assemble.
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74"># Author:   Eric Lee
+</span><span style="color:#e6db74"># Date:     2020-01-16
+</span><span style="color:#e6db74"># Version:  0.3.5
+</span><span style="color:#e6db74">
+</span><span style="color:#e6db74">&#39;&#39;&#39;</span>
+<span style="color:#f92672">import</span> time
+<span style="color:#f92672">import</span> os
+<span style="color:#f92672">import</span> base64
+<span style="color:#f92672">import</span> getpass
+<span style="color:#f92672">import</span> argparse
+<span style="color:#f92672">import</span> subprocess
+<span style="color:#f92672">from</span> glob <span style="color:#f92672">import</span> glob
+<span style="color:#f92672">from</span> multiprocessing <span style="color:#f92672">import</span> cpu_count
+<span style="color:#66d9ef">try</span>:
+    <span style="color:#f92672">import</span> yagmail
+<span style="color:#66d9ef">except</span> <span style="color:#a6e22e">ImportError</span>:
+    subprocess<span style="color:#f92672">.</span>call(<span style="color:#e6db74">&#39;pip install yagmail&#39;</span>, shell<span style="color:#f92672">=</span>True)
+    <span style="color:#f92672">import</span> yagmail
+
+<span style="color:#66d9ef">try</span>:
+    <span style="color:#f92672">from</span> tqdm <span style="color:#f92672">import</span> tqdm
+<span style="color:#66d9ef">except</span> <span style="color:#a6e22e">ImportError</span>:
+    subprocess<span style="color:#f92672">.</span>call(<span style="color:#e6db74">&#39;pip install tqdm&#39;</span>, shell<span style="color:#f92672">=</span>True)
+    <span style="color:#f92672">from</span> tqdm <span style="color:#f92672">import</span> tqdm
+
+<span style="color:#66d9ef">try</span>:
+    <span style="color:#f92672">from</span> colorama <span style="color:#f92672">import</span> init, Fore, Back
+<span style="color:#66d9ef">except</span> <span style="color:#a6e22e">ImportError</span>:
+    subprocess<span style="color:#f92672">.</span>call(<span style="color:#e6db74">&#39;pip install colorama&#39;</span>, shell<span style="color:#f92672">=</span>True)
+    <span style="color:#f92672">from</span> colorama <span style="color:#f92672">import</span> init, Fore, Back
+
+<span style="color:#66d9ef">try</span>:
+    <span style="color:#f92672">import</span> pandas <span style="color:#f92672">as</span> pd
+<span style="color:#66d9ef">except</span> <span style="color:#a6e22e">ImportError</span>:
+    subprocess<span style="color:#f92672">.</span>call(<span style="color:#e6db74">&#39;pip install pandas&#39;</span>, shell<span style="color:#f92672">=</span>True)
+    <span style="color:#f92672">import</span> pandas <span style="color:#f92672">as</span> pd
+
+
+<span style="color:#e6db74">&#39;&#39;&#39;
+</span><span style="color:#e6db74">History:
+</span><span style="color:#e6db74">0.1   create
+</span><span style="color:#e6db74">0.1.1 add unzip function
+</span><span style="color:#e6db74">      add choice of read length (150/250)
+</span><span style="color:#e6db74">0.2   rewrite with def funtion, print color symbol notice
+</span><span style="color:#e6db74">0.2.1 add prcessing state
+</span><span style="color:#e6db74">0.2.2 add judge function to process the baits input filenames
+</span><span style="color:#e6db74">0.2.3 fix the fq2fa parameters mistakes R1 R2 is not global variations
+</span><span style="color:#e6db74">0.2.4 support extract more type compressed input_files
+</span><span style="color:#e6db74">0.2.5 integrated seqspicker function in one script
+</span><span style="color:#e6db74">0.2.6 add colorama to show colors in windows console
+</span><span style="color:#e6db74">0.2.7 add end color
+</span><span style="color:#e6db74">0.2.8 make import more robust
+</span><span style="color:#e6db74">0.3   TODO：用click获取参数，tqdm创建进度条，最后建立一个各步骤名称的元组set，循环，
+</span><span style="color:#e6db74">      依据参数判定执行哪一步
+</span><span style="color:#e6db74">0.3.1 去除click，逻辑太难弄，用argparse重写
+</span><span style="color:#e6db74">0.3.2 增加任务完成后可选邮件通知
+</span><span style="color:#e6db74">0.3.3 排除了tqdm进度条末尾残留字符的问题。中文字符导致，英文无问题
+</span><span style="color:#e6db74">0.3.4 调整tqdm显示设置
+</span><span style="color:#e6db74">0.3.5 增加文件检测，避免运行到中间因缺失文件而中断
+</span><span style="color:#e6db74">&#39;&#39;&#39;</span>
+
+parser <span style="color:#f92672">=</span> argparse<span style="color:#f92672">.</span>ArgumentParser(prog<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;idba-assemble.py&#39;</span>, usage<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;python </span><span style="color:#e6db74">%(prog)s</span><span style="color:#e6db74"> &#39;</span> <span style="color:#f92672">+</span>
+                                 <span style="color:#e6db74">&#39;fastq -i R1.fq R2.fq -r 150 -b COI.fa&#39;</span>,
+                                 description<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;原始数据需为clean data&#39;</span>)
+parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#39;-v&#39;</span>, <span style="color:#e6db74">&#39;--version&#39;</span>, action<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;version&#39;</span>, version<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;</span><span style="color:#e6db74">%(prog)s</span><span style="color:#e6db74"> v 0.3.5&#39;</span>)
+parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#39;filetype&#39;</span>, default<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;fastq&#39;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;bz2|targz|gz|fastq&#39;</span>,
+                    choices<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;bz2&#39;</span>, <span style="color:#e6db74">&#39;targz&#39;</span>, <span style="color:#e6db74">&#39;gz&#39;</span>, <span style="color:#e6db74">&#39;fastq&#39;</span>],
+                    help<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;输入文件格式，如为压缩文件将自动解压&#39;</span>)
+parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#39;-i&#39;</span>, <span style="color:#e6db74">&#39;--inputs&#39;</span>, nargs<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, required<span style="color:#f92672">=</span>True,
+                    metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;*-clean.fq&#39;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;输入文件名称[双端测序结果文件]&#39;</span>)
+parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#39;-r&#39;</span>, <span style="color:#e6db74">&#39;--read&#39;</span>, choices<span style="color:#f92672">=</span>[<span style="color:#ae81ff">150</span>, <span style="color:#ae81ff">250</span>], type<span style="color:#f92672">=</span>int,
+                    metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;150|250&#39;</span>, required<span style="color:#f92672">=</span>True,
+                    help<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;输入双端测序读长[150/250]&#39;</span>)
+parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#39;-b&#39;</span>, <span style="color:#e6db74">&#39;--baits&#39;</span>, nargs<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;+&#39;</span>, metavar<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;COI.fa&#39;</span>,
+                    required<span style="color:#f92672">=</span>True, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;输入诱饵序列文件名称，至少一个，可多个&#39;</span>)
+parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#39;-m&#39;</span>, <span style="color:#e6db74">&#39;--mail&#39;</span>, nargs<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;?&#39;</span>, default<span style="color:#f92672">=</span>False,
+                    const<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;xxxx@126.com&#39;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;接收任务完成的邮箱地址&#39;</span>) 
+
+args <span style="color:#f92672">=</span> parser<span style="color:#f92672">.</span>parse_args()
+
+<span style="color:#75715e"># init(autoreset=True)  # colorama set</span>
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">green</span>(log):
+    <span style="color:#e6db74">&#39;print logs with green color&#39;</span>
+    <span style="color:#66d9ef">return</span> Fore<span style="color:#f92672">.</span>GREEN <span style="color:#f92672">+</span> log <span style="color:#f92672">+</span> Fore<span style="color:#f92672">.</span>RESET
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">red</span>(error):
+    <span style="color:#e6db74">&#39;print error with red color&#39;</span>
+    <span style="color:#66d9ef">return</span> Fore<span style="color:#f92672">.</span>RED <span style="color:#f92672">+</span> error <span style="color:#f92672">+</span> Fore<span style="color:#f92672">.</span>RESET
+    
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">yellow</span>(notice):
+    <span style="color:#e6db74">&#39;print notice with yellow color&#39;</span>
+    <span style="color:#66d9ef">return</span> Fore<span style="color:#f92672">.</span>YELLOW <span style="color:#f92672">+</span> notice <span style="color:#f92672">+</span> Fore<span style="color:#f92672">.</span>RESET
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">strong_notice</span>(notice<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#39;strong&#39;</span>]):
+    <span style="color:#e6db74">&#39;notice in center and red background&#39;</span>
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">cprint</span>(repeat, char<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;#&#39;</span>):
+        <span style="color:#66d9ef">print</span>(Back<span style="color:#f92672">.</span>GREEN <span style="color:#f92672">+</span> char <span style="color:#f92672">*</span> repeat <span style="color:#f92672">+</span> Back<span style="color:#f92672">.</span>RESET)
+
+    width <span style="color:#f92672">=</span> os<span style="color:#f92672">.</span>get_terminal_size()[<span style="color:#ae81ff">0</span>]
+    cprint(width)
+    <span style="color:#66d9ef">for</span> line <span style="color:#f92672">in</span> notice: 
+        <span style="color:#66d9ef">print</span>(Back<span style="color:#f92672">.</span>GREEN <span style="color:#f92672">+</span> line<span style="color:#f92672">.</span>center(width) <span style="color:#f92672">+</span> Back<span style="color:#f92672">.</span>RESET)
+    cprint(width)
+
+
+cpu_number <span style="color:#f92672">=</span> cpu_count()  <span style="color:#75715e"># get &amp; check cpu numbers</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">check_cpu</span>():
+    <span style="color:#66d9ef">if</span> cpu_number <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">8</span>:
+        <span style="color:#66d9ef">print</span>(red(f<span style="color:#e6db74">&#39;NOTICE: The CPU number is {cpu_number}, it is not &#39;</span> <span style="color:#f92672">+</span>
+                  <span style="color:#e6db74">&#39;recommanded to run following steps!&#39;</span>))
+        os<span style="color:#f92672">.</span>_exit(<span style="color:#ae81ff">0</span>)
+
+
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">check_file_existence</span>():
+    <span style="color:#e6db74">&#39;check whether the files are existed in current work folder&#39;</span>
+    file_names <span style="color:#f92672">=</span> args<span style="color:#f92672">.</span>baits <span style="color:#f92672">+</span> args<span style="color:#f92672">.</span>inputs
+    exit <span style="color:#f92672">=</span> False
+    <span style="color:#66d9ef">for</span> file_name <span style="color:#f92672">in</span> file_names:
+        <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>exists(file_name):
+            <span style="color:#66d9ef">print</span>(red(f<span style="color:#e6db74">&#39;{file_name} can not be found!&#39;</span>))
+            exit <span style="color:#f92672">=</span> True
+    <span style="color:#66d9ef">if</span> exit:
+        os<span style="color:#f92672">.</span>_exit(<span style="color:#ae81ff">0</span>)
+
+
+<span style="color:#75715e"># mail sender</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">triple_try_mail</span>(passwd_salt):
+    <span style="color:#e6db74">&#39;&#39;&#39;
+</span><span style="color:#e6db74">    try send mail three times
+</span><span style="color:#e6db74">    :passwd_salt: &#39;&#39;
+</span><span style="color:#e6db74">    &#39;&#39;&#39;</span>
+    
+    passwd_encrypt <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;xxxxxxxxxxxxxx&#39;</span>
+    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> passwd_salt:
+        passwd_encrypt <span style="color:#f92672">=</span> passwd_encrypt<span style="color:#f92672">.</span>replace(i, <span style="color:#e6db74">&#39;&#39;</span>, <span style="color:#ae81ff">1</span>)
+    passwd_decrypt <span style="color:#f92672">=</span> base64<span style="color:#f92672">.</span>decodebytes(passwd_encrypt<span style="color:#f92672">.</span>encode())<span style="color:#f92672">.</span>decode()
+    yag <span style="color:#f92672">=</span> yagmail<span style="color:#f92672">.</span>SMTP(user<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;xxxxx@qq.com&#39;</span>,
+                       password<span style="color:#f92672">=</span>passwd_decrypt,
+                       host<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;smtp.qq.com&#39;</span>, port<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;465&#39;</span>)  <span style="color:#75715e"># 验证邮件服务器</span>
+    attempts <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+    success <span style="color:#f92672">=</span> False
+    <span style="color:#66d9ef">while</span> attempts <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">3</span> <span style="color:#f92672">and</span> <span style="color:#f92672">not</span> success:
+        <span style="color:#66d9ef">try</span>:
+            <span style="color:#66d9ef">if</span> os<span style="color:#f92672">.</span>path<span style="color:#f92672">.</span>exists(<span style="color:#e6db74">&#39;hits.fas&#39;</span>):
+                yag<span style="color:#f92672">.</span>send(args<span style="color:#f92672">.</span>mail, subject <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;idba_ud task completed&#34;</span>,
+                         contents <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&lt;h2&gt;idba_ud assemble mission completed!&lt;/h2&gt;&#34;</span>,
+                         attachments <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;hits.fas&#39;</span>)
+            <span style="color:#66d9ef">else</span>:
+                yag<span style="color:#f92672">.</span>send(args<span style="color:#f92672">.</span>mail, subject <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;idba_ud task completed&#34;</span>,
+                         contents <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;&lt;h2&gt;idba_ud assemble mission completed!&lt;/h2&gt;&#34;</span>)
+            success <span style="color:#f92672">=</span> True
+            <span style="color:#66d9ef">print</span>(green(<span style="color:#e6db74">&#39;邮件发送成功&#39;</span>))
+        <span style="color:#66d9ef">except</span>:
+            attempts <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>
+            <span style="color:#66d9ef">if</span> attempts <span style="color:#f92672">==</span> <span style="color:#ae81ff">3</span>:
+                <span style="color:#66d9ef">print</span>(red(<span style="color:#e6db74">&#39;邮件发送失败&#39;</span>))
+                os<span style="color:#f92672">.</span>_exit(<span style="color:#ae81ff">0</span>)
+
+
+<span style="color:#75715e"># seqspicker</span>
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">SequencePicker</span>(object):
+    <span style="color:#e6db74">&#39;&#39;&#39;
+</span><span style="color:#e6db74">    extract target sequences from the completed scaffold assembled by idba_ud
+</span><span style="color:#e6db74">    Usage:
+</span><span style="color:#e6db74">    SequencePicker.get_hits(&#39;./OutFolder/scaffold.fa&#39;, blast_out_filename)
+</span><span style="color:#e6db74">    &#39;&#39;&#39;</span>
+    <span style="color:#66d9ef">def</span> __init__(self):
+        <span style="color:#66d9ef">pass</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_parse_blastn</span>(self, blastn6):
+        <span style="color:#e6db74">&#39;&#39;&#39;parse blastn tabular results&#39;&#39;&#39;</span>
+        <span style="color:#66d9ef">with</span> open(blastn6) <span style="color:#66d9ef">as</span> fi:
+            blast_out_list <span style="color:#f92672">=</span> pd<span style="color:#f92672">.</span>read_csv(fi, sep<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\t</span><span style="color:#e6db74">&#39;</span>, header<span style="color:#f92672">=</span>None)
+            scaffold_name <span style="color:#f92672">=</span> list(blast_out_list[<span style="color:#ae81ff">0</span>])
+            index_name <span style="color:#f92672">=</span> list(blast_out_list[<span style="color:#ae81ff">1</span>])
+            index_dict <span style="color:#f92672">=</span> dict(zip(scaffold_name, index_name))
+
+        <span style="color:#66d9ef">return</span> index_dict
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_read_fasta</span>(self, scaffold_fa):
+        <span style="color:#e6db74">&#39;&#39;&#39;read fasta file as dict&#39;&#39;&#39;</span>
+        fasta <span style="color:#f92672">=</span> {}
+        <span style="color:#66d9ef">with</span> open(scaffold_fa) <span style="color:#66d9ef">as</span> file_one:
+            <span style="color:#66d9ef">for</span> line <span style="color:#f92672">in</span> file_one:
+                line <span style="color:#f92672">=</span> line<span style="color:#f92672">.</span>strip()
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">not</span> line:
+                    <span style="color:#66d9ef">continue</span>
+                <span style="color:#66d9ef">if</span> line<span style="color:#f92672">.</span>startswith(<span style="color:#e6db74">&#39;&gt;&#39;</span>):
+                    active_sequence_name <span style="color:#f92672">=</span> line[<span style="color:#ae81ff">1</span>:]
+                    <span style="color:#66d9ef">if</span> active_sequence_name <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> fasta:
+                        fasta[active_sequence_name] <span style="color:#f92672">=</span> []
+                    <span style="color:#66d9ef">continue</span>
+                sequence <span style="color:#f92672">=</span> line
+                fasta[active_sequence_name]<span style="color:#f92672">.</span>append(sequence)
+
+        <span style="color:#66d9ef">return</span> fasta
+
+    <span style="color:#a6e22e">@classmethod</span>
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_hits</span>(cls, scaffold, seq_blast):
+        <span style="color:#e6db74">&#39;&#39;&#39;get seq targets&#39;&#39;&#39;</span>
+        index <span style="color:#f92672">=</span> cls()<span style="color:#f92672">.</span>_parse_blastn(seq_blast)
+        fasta <span style="color:#f92672">=</span> cls()<span style="color:#f92672">.</span>_read_fasta(scaffold)
+        hit <span style="color:#f92672">=</span> {}
+        <span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#39;hits.fas&#39;</span>, <span style="color:#e6db74">&#39;w&#39;</span>) <span style="color:#66d9ef">as</span> hits:
+            <span style="color:#66d9ef">for</span> key, value <span style="color:#f92672">in</span> index<span style="color:#f92672">.</span>items():
+                newkey <span style="color:#f92672">=</span> key <span style="color:#f92672">+</span> <span style="color:#e6db74">&#39;_&#39;</span> <span style="color:#f92672">+</span> value
+                hit[newkey] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span><span style="color:#f92672">.</span>join(fasta[key])
+
+            <span style="color:#66d9ef">for</span> newkey, hit_value <span style="color:#f92672">in</span> hit<span style="color:#f92672">.</span>items():
+                hits<span style="color:#f92672">.</span>write(f<span style="color:#e6db74">&#39;&gt;{newkey}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">{hit_value}</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#39;</span>)
+
+
+<span style="color:#75715e"># 第一步 输入</span>
+<span style="color:#66d9ef">class</span> <span style="color:#a6e22e">InFiles</span>(object):
+    <span style="color:#e6db74">&#39;&#39;&#39;
+</span><span style="color:#e6db74">    获取fastq文件
+</span><span style="color:#e6db74">    obj = InFiles.getfastq(args.filetype, *args.inputs)
+</span><span style="color:#e6db74">    &#39;&#39;&#39;</span>
+    <span style="color:#75715e">#def __init__(self, filetype, *input_files):</span>
+    <span style="color:#75715e">#    self.filetype = filetype</span>
+    <span style="color:#75715e">#    self.input_files = input_files</span>
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_bz2</span>(self, <span style="color:#f92672">*</span>input_files):
+        <span style="color:#e6db74">&#39;two tar.bz2 input_files name &lt;*.tar.bz2&gt;&#39;</span>
+        <span style="color:#66d9ef">for</span> bz2_file <span style="color:#f92672">in</span> input_files:
+            subprocess<span style="color:#f92672">.</span>call(f<span style="color:#e6db74">&#39;tar -jxvf {bz2_file}&#39;</span>, shell<span style="color:#f92672">=</span>True)
+        fq_files <span style="color:#f92672">=</span> glob(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#39;*.fq&#39;</span>)
+        fq_files<span style="color:#f92672">.</span>extend(glob(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#39;*.fastq&#39;</span>))
+
+        <span style="color:#66d9ef">return</span> fq_files
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_targz</span>(self, <span style="color:#f92672">*</span>input_files):
+        <span style="color:#e6db74">&#39;two tar.gz input_files name &lt;*.tar.gz&gt;&#39;</span>
+        <span style="color:#66d9ef">for</span> tar_file <span style="color:#f92672">in</span> input_files:
+            subprocess<span style="color:#f92672">.</span>call(f<span style="color:#e6db74">&#39;tar -zxvf {tar_file}&#39;</span>, shell<span style="color:#f92672">=</span>True)
+        fq_files <span style="color:#f92672">=</span> glob(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#39;*.fq&#39;</span>)
+        fq_files<span style="color:#f92672">.</span>extend(glob(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#39;*.fastq&#39;</span>))
+
+        <span style="color:#66d9ef">return</span> fq_files
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_gz</span>(self, <span style="color:#f92672">*</span>input_files):
+        <span style="color:#e6db74">&#39;two gz input_files name &lt;*.gz&gt;&#39;</span>
+        <span style="color:#66d9ef">for</span> gz_file <span style="color:#f92672">in</span> input_files:
+            subprocess<span style="color:#f92672">.</span>call(f<span style="color:#e6db74">&#39;gzip -d {gz_file}&#39;</span>, shell<span style="color:#f92672">=</span>True)
+        fq_files <span style="color:#f92672">=</span> glob(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#39;*.fq&#39;</span>)
+        fq_files<span style="color:#f92672">.</span>extend(glob(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#39;*.fastq&#39;</span>))
+
+        <span style="color:#66d9ef">return</span> fq_files
+
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">_fastq</span>(self, <span style="color:#f92672">*</span>fq_files):
+        <span style="color:#e6db74">&#39;two fastq input_files name &lt;*.fq&gt;/&lt;*.fastq&gt;&#39;</span>
+
+        <span style="color:#66d9ef">return</span> fq_files
+
+    <span style="color:#a6e22e">@classmethod</span>
+    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_fastqs</span>(cls, filetype, <span style="color:#f92672">*</span>input_files):
+        <span style="color:#e6db74">&#39;input func&#39;</span>
+        param_dict <span style="color:#f92672">=</span> {<span style="color:#e6db74">&#39;bz2&#39;</span>: cls()<span style="color:#f92672">.</span>_bz2,
+                      <span style="color:#e6db74">&#39;targz&#39;</span>: cls()<span style="color:#f92672">.</span>_targz,
+                      <span style="color:#e6db74">&#39;gz&#39;</span>: cls()<span style="color:#f92672">.</span>_gz,
+                      <span style="color:#e6db74">&#39;fastq&#39;</span>: cls()<span style="color:#f92672">.</span>_fastq}
+        tqdm<span style="color:#f92672">.</span>write(f<span style="color:#e6db74">&#39;Deal with {filetype} files: {yellow(input_files[0])} {yellow(input_files[1])}&#39;</span>)
+        fastq_files <span style="color:#f92672">=</span> param_dict<span style="color:#f92672">.</span>get(filetype, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)(<span style="color:#f92672">*</span>input_files)
+
+        <span style="color:#66d9ef">return</span> fastq_files
+
+
+<span style="color:#75715e"># 第二步 设定参数</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">set_kmers</span>():
+    <span style="color:#e6db74">&#39;get and check read length parameters&#39;</span>
+    kmer_parameters <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>  <span style="color:#75715e"># set kmers</span>
+    <span style="color:#66d9ef">if</span> args<span style="color:#f92672">.</span>read <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">151</span>:
+        kmer_parameters <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;--mink 80 --maxk 240&#39;</span>
+        tqdm<span style="color:#f92672">.</span>write(f<span style="color:#e6db74">&#39;Read length is {args.read}, and kmers setted as &#34;{yellow(kmer_parameters)}&#34;.&#39;</span>)
+    <span style="color:#66d9ef">else</span>:
+        kmer_parameters <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;--mink 40 --maxk 140&#39;</span>
+        tqdm<span style="color:#f92672">.</span>write(f<span style="color:#e6db74">&#39;Read length is {args.read}, and kmers setted as &#34;{yellow(kmer_parameters)}&#34;.&#39;</span>)
+
+    <span style="color:#66d9ef">return</span> kmer_parameters
+
+
+<span style="color:#75715e"># 第三步 组装</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">assemble</span>(kmer_parameters, <span style="color:#f92672">*</span>fq_files):
+    <span style="color:#e6db74">&#39;idba_ud组装过程&#39;</span>
+   
+    merge <span style="color:#f92672">=</span> f<span style="color:#e6db74">&#39;fq2fa --merge {fq_files[0]} {fq_files[1]} merged.fsa --filter&#39;</span>
+    assembly <span style="color:#f92672">=</span> f<span style="color:#e6db74">&#39;idba_ud -r merged.fsa {kmer_parameters} --step 20 -o OutFolder &#39;</span> <span style="color:#f92672">+</span> \
+               f<span style="color:#e6db74">&#39;--num_threads {cpu_number - 1} --min_contig 500 --similar 0.98&#39;</span>
+    assemble_parameters <span style="color:#f92672">=</span> [merge, assembly]
+    assemble_tqdm <span style="color:#f92672">=</span> tqdm(assemble_parameters, desc<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;  Assembling&#39;</span>, position<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>,
+                         bar_format<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{desc}: {n_fmt}/{total_fmt}|{bar}|&#39;</span>)
+    <span style="color:#66d9ef">for</span> step <span style="color:#f92672">in</span> assemble_tqdm:
+        tqdm<span style="color:#f92672">.</span>write(step)  <span style="color:#75715e"># test</span>
+        subprocess<span style="color:#f92672">.</span>call(step)
+
+
+<span style="color:#75715e"># 第四步 调取</span>
+<span style="color:#66d9ef">def</span> <span style="color:#a6e22e">blast_hits</span>(baits):
+    baits_tqdm <span style="color:#f92672">=</span> tqdm(baits, desc<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;  Pickup&#39;</span>, position<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>,
+                      bar_format<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{desc}: {n_fmt}/{total_fmt}|{bar}|&#39;</span>)    
+    <span style="color:#66d9ef">for</span> bait <span style="color:#f92672">in</span> baits_tqdm:
+        blast_out_filename <span style="color:#f92672">=</span> f<span style="color:#e6db74">&#39;{bait}.blastout&#39;</span>
+        makeblastdb <span style="color:#f92672">=</span> f<span style="color:#e6db74">&#39;makeblastdb -in {bait} -dbtype nucl -parse_seqids -out {bait}&#39;</span>
+        blastn <span style="color:#f92672">=</span> f<span style="color:#e6db74">&#39;blastn -query ./OutFolder/scaffold.fa -out {blast_out_filename} -db {bait} -outfmt 6 </span><span style="color:#ae81ff">\
+</span><span style="color:#ae81ff"></span><span style="color:#e6db74">-evalue 1e-5 -max_target_seqs 1 -num_threads {cpu_number - 1}&#39;</span>
+
+        blast_parameters <span style="color:#f92672">=</span> [makeblastdb, blastn, <span style="color:#e6db74">&#39;get_hits&#39;</span>]
+        <span style="color:#66d9ef">for</span> step <span style="color:#f92672">in</span> tqdm(blast_parameters, desc<span style="color:#f92672">=</span>f<span style="color:#e6db74">&#39;    {bait} selecting&#39;</span>, position<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>,
+                         bar_format<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{desc}: {n_fmt}/{total_fmt}|{bar}|&#39;</span>):
+            <span style="color:#66d9ef">if</span> step <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#39;get_hits&#39;</span>:
+                tqdm<span style="color:#f92672">.</span>write(step)   
+                subprocess<span style="color:#f92672">.</span>call(step)
+            <span style="color:#66d9ef">else</span>:
+                tqdm<span style="color:#f92672">.</span>write(f<span style="color:#e6db74">&#39;SequencePicker.get_hits(./OutFolder/scaffold.fa, {blast_out_filename})&#39;</span>)  <span style="color:#75715e"># test</span>
+                SequencePicker<span style="color:#f92672">.</span>get_hits(<span style="color:#e6db74">&#39;./OutFolder/scaffold.fa&#39;</span>, blast_out_filename)
+
+
+
+<span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;__main__&#39;</span>:
+
+    check_cpu()  <span style="color:#75715e"># check whether CPU is enough for analysis</span>
+    check_file_existence()
+    
+    <span style="color:#66d9ef">if</span> args<span style="color:#f92672">.</span>mail:
+        passwd_salt<span style="color:#f92672">=</span>getpass<span style="color:#f92672">.</span>getpass()
+
+    <span style="color:#66d9ef">with</span> tqdm(total<span style="color:#f92672">=</span><span style="color:#ae81ff">4</span>, desc<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;Main progress&#39;</span>, position<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, bar_format<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;{desc}: {n_fmt}/{total_fmt}|{bar}|&#39;</span>) <span style="color:#66d9ef">as</span> pbar:
+        tqdm<span style="color:#f92672">.</span>write(green(<span style="color:#e6db74">&#39;Getting fastqs:&#39;</span>)) <span style="color:#75715e"># desc参数为中文会导致显示不完美</span>
+        fq_file_names <span style="color:#f92672">=</span> InFiles<span style="color:#f92672">.</span>get_fastqs(args<span style="color:#f92672">.</span>filetype, <span style="color:#f92672">*</span>args<span style="color:#f92672">.</span>inputs)
+        pbar<span style="color:#f92672">.</span>update(<span style="color:#ae81ff">1</span>)
+        
+        tqdm<span style="color:#f92672">.</span>write(green(<span style="color:#e6db74">&#39;Set kmers:&#39;</span>))
+        setted_kmers <span style="color:#f92672">=</span> set_kmers()  <span style="color:#75715e"># set kmer start, end and step</span>
+        pbar<span style="color:#f92672">.</span>update(<span style="color:#ae81ff">1</span>)
+        
+        tqdm<span style="color:#f92672">.</span>write(green(<span style="color:#e6db74">&#39;Start assembly:&#39;</span>))
+        assemble(setted_kmers, <span style="color:#f92672">*</span>fq_file_names)
+        pbar<span style="color:#f92672">.</span>update(<span style="color:#ae81ff">1</span>)
+        
+        tqdm<span style="color:#f92672">.</span>write(green(<span style="color:#e6db74">&#39;Start pickup:&#39;</span>))
+        blast_hits(args<span style="color:#f92672">.</span>baits)
+        pbar<span style="color:#f92672">.</span>update(<span style="color:#ae81ff">1</span>)
+
+
+    <span style="color:#66d9ef">if</span> args<span style="color:#f92672">.</span>mail:
+        <span style="color:#66d9ef">print</span>(green(f<span style="color:#e6db74">&#39;Send mail to {yellow(args.mail)}&#39;</span>))
+        triple_try_mail(passwd_salt)  <span style="color:#75715e"># send mail</span>
+
+    <span style="color:#75715e"># 结束</span>
+    notice_list <span style="color:#f92672">=</span> [<span style="color:#e6db74">&#39;ASSEMBLE COMPLETED!&#39;</span>,
+                   <span style="color:#e6db74">&#39;The result file is stored in `./hits.fas`&#39;</span>]
+    strong_notice(notice_list)
+
+</code></pre></div><p>将上述软件安装成功后并配置好环境变量即可使用，若出现python报错没有依赖包，将脚本中import后的包都安装下。python版本要求大于3.</p>
+<blockquote>
+<p>linux环境变量一般在~/.bashrc中，使用文本编辑器（如vim）更改相关配置就好：</p>
+</blockquote>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#75715e"># add idbassemble to path</span>
+export PATH<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span>$PATH<span style="color:#e6db74">:/path/to/idbassemble.pyfolder/&#34;</span>
+</code></pre></div><blockquote>
+<p>如果出现脚本不能运行，请更改脚本文件的可执行权限``chmod +x idba-ud-assemble-0.3.5.py`</p>
+</blockquote>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="https://xinli0111.gitee.io/academic" >
+    &copy;  Li, Xin's Blog 2020 
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/academic/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>
