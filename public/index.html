@@ -34,7 +34,7 @@
 <meta property="og:description" content="Note the knowledge!" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://xinli0111.gitee.io/" />
-<meta property="og:updated_time" content="2020-04-04T18:38:14+08:00" />
+<meta property="og:updated_time" content="2020-04-05T08:58:51+08:00" />
 <meta itemprop="name" content="Li, Xin&#39;s Blog">
 <meta itemprop="description" content="Note the knowledge!"><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Li, Xin&#39;s Blog"/>
@@ -144,6 +144,41 @@
       
       <div class="blah w-100">
         <h1 class="f3 fw1 athelas mt0 lh-title">
+          <a href="https://xinli0111.gitee.io/post/%E4%BD%BF%E7%94%A8hugo%E5%BB%BA%E7%AB%8B%E7%BD%91%E7%AB%99/" class="color-inherit dim link">
+            使用hugo建立网站
+            </a>
+        </h1>
+        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
+           hugo轻量化，无依赖，速度快的静态博客生成程序。 个人博客预览：https://xinli0111.gitee.io
+ Hugo下载 Hugo官网：https://gohugo.io/安装方式参考官网
+开始建立网站 1. 建立网站 建立网站存放文件夹，一般为hugo的文件夹中执行hugo new site yourblog，此文件夹为网站根目录
+2. 下载主题 hugo主题网站：https://themes.gohugo.io/进入网站根目录中的·themes·文件夹，执行git clone 主题的GitHub地址
+ 去除主题.git，如果使用过子模块方式，如何删除 git rm --cached submodulesname rm .gitmodules
+ 3. 主题适应性修改 将themes/ananke/exampleSite内的内容，复制到网站根目录下，替换，并修改相应文件内的内容，如网站标题，作者信息等。
+4. 第一篇博客文章 在网站根目录运行hugo new post/first.md。然后使用编辑器编写内容，注意文件头不要更改。完成文章写作后，可使用hugo server -D启动本地网站预览结果，-D为预览包含草稿（draft：true）。正式发布时，将markdown文件头的draft：true改为false。
+5. 编译网站 执行hugo即可，部署网站 注意：在部署之前，将网站根目录下的配置文件config.toml中的baseURL = &quot;**[**https://xinli0111.gitee.io/**](https://xinli0111.gitee.io/)**&quot;中的网址更新为部署网站网址，否则会出现主题没法显示的情况。
+github + netlify  push后netlify自动部署
+ 首先，创建GitHub pages，然后将本地代码push到GitHub。然后，使用GitHub账户登录netlify，创建新网站，选择github仓库。选择部署应用为hugo，部署文件夹为public。
+gitee  push后需要手动部署下
+ 在服务中，开启page服务，手动部署public文件夹。
+        </div>
+          <a href="https://xinli0111.gitee.io/post/%E4%BD%BF%E7%94%A8hugo%E5%BB%BA%E7%AB%8B%E7%BD%91%E7%AB%99/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">继续阅读</a>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+          </div>
+        
+          <div class="relative w-100 mb4">
+            
+<article class="bb b--black-10">
+  <div class="db pv4 ph3 ph0-l no-underline dark-gray">
+    <div class="flex flex-column flex-row-ns">
+      
+      <div class="blah w-100">
+        <h1 class="f3 fw1 athelas mt0 lh-title">
           <a href="https://xinli0111.gitee.io/post/idba_ud%E6%8B%BC%E6%8E%A5%E6%98%86%E8%99%AB%E7%BA%BF%E7%B2%92%E4%BD%93%E5%85%A8%E5%9F%BA%E5%9B%A0%E7%BB%84%E8%84%9A%E6%9C%AC/" class="color-inherit dim link">
             Idba_ud拼接昆虫线粒体全基因组脚本
             </a>
@@ -163,37 +198,25 @@
 
           </div>
         
-          <div class="relative w-100 mb4">
-            
-<article class="bb b--black-10">
-  <div class="db pv4 ph3 ph0-l no-underline dark-gray">
-    <div class="flex flex-column flex-row-ns">
-      
-      <div class="blah w-100">
-        <h1 class="f3 fw1 athelas mt0 lh-title">
-          <a href="https://xinli0111.gitee.io/post/snakemake%E5%88%9B%E5%BB%BAidba%E6%8B%BC%E6%8E%A5%E6%B5%81%E7%A8%8B/" class="color-inherit dim link">
-            Snakemake创建idba拼接流程
-            </a>
-        </h1>
-        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
-          上一篇文章中说到了自己写脚本创建的idba流程，但是在工作流程方面是有一些专门的软件存在。比如Next flow以及snakemake等，因为snakemake是以Python语言为主要书写语言，因此学习了snakemake。
- snakemake简介 snakemake是一个创建流程的工具，其最主要的部分就是一个个**&ldquo;rule&rdquo;**，一个rule就是一系列流程中的最基础的一步。每个rule简单来说就相当于一个shell脚本，主要由 input 、output 、shell 3个部分构成。多个rule之间由它们的 input 、 output 相互关系决定执行顺序。上一步的结果文件是下一步运行的条件。
-#这是一个简单的snakemake rule示例，将两个文件合并为一个文件 rule concat: input: expand(&#34;{file}.txt&#34;, file=[&#34;hello&#34;, &#34;world&#34;]) output: &#34;merge.txt&#34; shell: &#34;cat {input} &gt; {output}&#34; snakemake安装 之前尝试过自己安装snakemake，但是遇到了不知名错误，在手机上使用termux安装并无异常。查阅报错信息和官方指导后，建议使用官方提供的方法：使用conda直接创建新环境安装 conda create -c bioconda -c conda-forge -n snakemake snakemake ，自己新建环境再安装snakemake遭遇了依赖无法解决的情况，不知道是最近版本问题还是一直都有问题。
-激活snakemake环境 上一步已经安装好了新的conda环境——snakemake，在终端中使用 conda activate snakemake 激活snakemake环境。
-snakemake参数简介 snakemake的参数还挺多的，具体的请参阅官方文档，这里仅作简介。
---snakefile, -s 指定Snakefile，否则是当前目录下的Snakefile --dryrun, -n 不真正执行，一般用来查看Snakefile是否有错 --printshellcmds, -p 输出要执行的shell命令 --reason, -r 输出每条rule执行的原因,默认FALSE --cores, --jobs, -j 指定运行的核数，若不指定，则使用最大的核数 --force, -f 重新运行第一条rule或指定的rule --forceall, -F 重新运行所有的rule，不管是否已经有输出结果 --forcerun, -R 重新执行Snakefile，当更新了rule时候使用此命令 #一些可视化命令 $ snakemake --dag | dot -Tsvg &gt; dag.
-        </div>
-          <a href="https://xinli0111.gitee.io/post/snakemake%E5%88%9B%E5%BB%BAidba%E6%8B%BC%E6%8E%A5%E6%B5%81%E7%A8%8B/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">继续阅读</a>
-        
-      </div>
-    </div>
-  </div>
-</article>
-
-          </div>
-        
       </section>
 
+      
+      <section class="w-100">
+        <h1 class="f3">更多</h1>
+        
+        
+          <h2 class="f5 fw4 mb4 dib mr3">
+            <a href="https://xinli0111.gitee.io/post/snakemake%E5%88%9B%E5%BB%BAidba%E6%8B%BC%E6%8E%A5%E6%B5%81%E7%A8%8B/" class="link black dim">
+              Snakemake创建idba拼接流程
+            </a>
+          </h2>
+        
+
+        
+        
+          <a href="https://xinli0111.gitee.io/post/" class="link db f6 pa2 br3 bg-mid-gray white dim w4 tc">所有 Articles</a>
+        
+        </section>
       
 
       </div>
