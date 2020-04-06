@@ -1,4 +1,4 @@
-title = "Li, Xin's Blog | Homepage"
+title = "Li, Xin's Blog"
 baseURL = "https://xinli0111.gitee.io/"
 languageCode = "zh"
 theme = "ananke"
@@ -33,3 +33,10 @@ enableRobotsTXT = true
   background_color_class = "bg-black"
   featured_image = "/images/gohugo-default-sample-hero-image.jpg"
   recent_posts_number = 2
+
+
+[[menu.main]]
+  name="Home"
+  url="/"
+  weight="1"
+
